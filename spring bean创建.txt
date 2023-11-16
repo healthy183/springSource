@@ -1,0 +1,82 @@
+AbstractAutowireCapableBeanFactory#createBean(beanName,mbd,args);
+	resolveBeanClass(mbd, beanName) // 类是否被加载，未则加载
+	resolveBeforeInstantiation(beanName, mbdToUse); // 实例化之前的操作
+		bean = applyBeanPostProcessorsBeforeInstantiation(targetType, beanName);
+		bean = applyBeanPostProcessorsAfterInitialization(bean, beanName);  // 实例化之后的操作
+	Object beanInstance = doCreateBean(beanName, mbdToUse, args); // 执行实例化bean
+		instanceWrapper = createBeanInstance(beanName, mbd, args); // 创建Bean实例(包含推断构造方法)
+		applyMergedBeanDefinitionPostProcessors(mbd, beanType, beanName);// 处理合并后的BeanDefinition，意思是可以修改BeanDefinition的属性
+		addSingletonFactory(beanName, () -> getEarlyBeanReference(beanName, mbd, bean));// 循环依赖-添加到三级缓存
+		populateBean(beanName, mbd, instanceWrapper); // 属性填充
+		exposedObject = initializeBean(beanName, exposedObject, mbd); // 初始化
+		if (earlySingletonExposure) { // 循环依赖相关代码 
+			.....
+		}
+		registerDisposableBeanIfNecessary(beanName, bean, mbd);	// bean销毁相关逻辑
+		
+	
+postProcessBeanDefinition(candidate, beanName);
+
+AnnotationConfigUtils.processCommonDefinitionAnnotations(candidate);
+
+
+循环依赖
+创建bean中获取单例池中获取已经初始化好的bean
+AbstractBeanFactory
+Object sharedInstance = getSingleton(beanName);
+
+AbstractAutowireCapableBeanFactory 判断是否有循环依赖earlySingletonExposure
+
+bean创建与循环依赖流程：
+
+BeanA创建：
+1，存放beanA的beanName到singletonsCurrentlyInCreation(创建中的Map)
+2，将原始对象放入singletonFactories<beanAName:lambda<Aservice原始对象>(三级缓存) 
+3，寻找属性beanB→singletonObjects找不到则创建beanB
+4，完成依赖注入
+5，初始化前、初始化
+5，初始化后→beanA(代理)对象
+6，放入单例池
+
+BeanB创建：
+1，存放beanB的beanName到singletonsCurrentlyInCreation(创建中的Map)
+2，将原始对象放入singletonFactories<beanBName:lambda<beanB原始对象>(三级缓存) 
+3，寻找属性beanA→singletonObjects找不到→singletonsCurrentlyInCreation存在则触发循环依赖
+→earlySingletonObjects找不到→singletonFactories中调用lambda表达式获取原始beanA
+4，完成依赖注入
+5，初始化前、初始化
+5，初始化后→beanB(代理)对象
+6，放入单例池
+
+
+
+推断构造方法并创建bean
+
+有参创建bean：
+AbstractAutowireCapableBeanFactory.autowireConstructor
+
+无参创建bean：
+instantiateBean(beanName, mbd);
+
+beanName.contains("userService") || beanName.contains("orderService")
+
+candidateConstructorsCache
+
+
+
+
+创建AnnotationConfigApplicationContext的构造方法中：
+   父类AbstractApplicationContext创建ConfigurableEnvironment的子类StandardEnvironment
+   父类GenericApplicationContext构造方法创建DefaultListableBeanFactory
+本类创建AnnotatedBeanDefinitionReader
+本类创建ClassPathBeanDefinitionScanner
+
+
+
+
+
+
+
+
+
+				
